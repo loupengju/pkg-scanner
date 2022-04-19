@@ -1,48 +1,59 @@
 // 扫描所有目录以及文件
-const fg = require('fast-glob');
+const fg = require("fast-glob");
 const babel = require("@babel/core");
-const plugins = require('../plugins/scanner-import-or-require');
+const plugins = require("../plugins/scanner-import-or-require");
 const eventbus = require("../utils/eventbus");
-const ProgressBar = require('progress');
+const ProgressBar = require("progress");
+const { ignorePathList } = require("./constants");
 const chalk = require("chalk");
 
 const scanner = async (modules, rootDir) => {
   const allDeps = [];
-  const entries = await fg([`**/**/*.js`, `**/**/*.ts`, `**/**/*.tsx`], {ignore: ['package-lock.json', 'node_modules', 'src/locales/*', 'public/files/build/*']});
-  eventbus.$on('depArr', (depArr) => {
-    allDeps.push.apply(allDeps, depArr)
+  const entries = await fg([`**/**/*.js`, `**/**/*.ts`, `**/**/*.tsx`], {
+    ignore: ignorePathList,
+  });
+  eventbus.$on("depArr", (depArr) => {
+    allDeps.push.apply(allDeps, depArr);
   });
 
   const options = {
     presets: [
       [
-        "@babel/preset-typescript",
+        require("@babel/preset-typescript"),
         {
           isTSX: true,
           allExtensions: true,
           allowDeclareFields: true,
         },
       ],
+      // [
+      //   "@babel/preset-typescript",
+      //   {
+      //     isTSX: true,
+      //     allExtensions: true,
+      //     allowDeclareFields: true,
+      //   },
+      // ],
     ],
     plugins: [
       plugins(...arguments, modules),
       [
-        "@babel/plugin-proposal-decorators",
+        require("@babel/plugin-proposal-decorators"),
         {
           legacy: true,
         },
       ],
     ],
   };
-  const bar = new ProgressBar(chalk.green('处理模块中[:bar] :current/:total'), {total: entries.length, width: 20,});
+  const bar = new ProgressBar(chalk.green("处理模块中[:bar] :current/:total"), { total: entries.length, width: 20 });
   entries.forEach((filepath, index) => {
     bar.tick();
     babel.transformFileSync(filepath, options);
   });
 
   return [...new Set(allDeps)];
-}
+};
 
 module.exports = {
-  scanner
-}
+  scanner,
+};

@@ -12,7 +12,7 @@ const isHasPkg = fs.existsSync(`${CMD_PATH}/package.json`);
 if (isHasPkg) {
   const packageJson = require(`${CMD_PATH}/package.json`);
   // 获取所有依赖
-  const _allDeps = Object.keys({...packageJson['dependencies'], ...packageJson['devDependencies']});
+  const _allDeps = Object.keys({...(packageJson['dependencies'] || {}), ...(packageJson['devDependencies'] || {})});
   const allScripts = Object.keys(packageJson['scripts']).reduce((acc, cur) => {
     acc.push.apply(acc, packageJson['scripts'][cur].split(' '));
     return acc;
